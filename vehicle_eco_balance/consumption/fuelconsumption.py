@@ -14,6 +14,10 @@ from ..required_functions import generate_parms, request, distance, gradient, in
 class consumption():
 
     def fuel_consumption(car:car, osmbox:BboxSelector, track_df = gpd.GeoDataFrame()):
+
+        # ------------------------------------------
+        # Get elevation
+
         # Request elevation values from an open source (opentopodata.org)
         url = 'https://api.opentopodata.org/v1/eudem25m?locations='
         tracks = pd.DataFrame(columns=track_df.columns)
@@ -21,14 +25,14 @@ class consumption():
         # Add surface in get attribute method
         ox.settings.useful_tags_way = ['bridge', 'tunnel', 'oneway', 'lanes', 'ref', 'name','highway', 'maxspeed', 'service', 'access', 'area','landuse', 'width', 'est_width', 'junction', 'surface']
         # get the osm graph for the same area
-        G = ox.graph_from_bbox(osmbox.max_y, osmbox.min_y, osmbox.max_x, osmbox.min_x, network_type='drive')  
+        G = ox.graph_from_bbox(osmbox.max_y, osmbox.min_y, osmbox.max_x, osmbox.min_x, network_type='drive')
 
         # get the number of routes in the dataframe
         n = 0
         a = track_df['track.id'].value_counts()
         for i in a:
             n+=1
-        # loop through the dataframe and get the elevation from open source for each record in each routes   
+        # loop through the dataframe and get the elevation from open source for each record in each routes
         for i in range (0,n):
             one_track_id = track_df['track.id'].unique()[i]
             one_track = track_df[track_df['track.id'] == one_track_id]
@@ -79,15 +83,15 @@ class consumption():
                     if i > 0:
                         m = one_track.loc[i-1,"maxspeed"]
                         one_track.loc[i,"maxspeed"] = m
-                        
-                # check if the edge has a surface value, if not then use the value of previous point    
+
+                # check if the edge has a surface value, if not then use the value of previous point
                 if "surface" in dic:
                     one_track.loc[i,"surface"] = dic["surface"]
                 else:
                     if i > 0:
                         s = one_track.loc[i-1,"surface"]
                         one_track.loc[i,"surface"] =  s
-                    
+
 
                 # get the rolling resistance cofficient
                 if one_track.loc[i, 'surface'] == "asphalt":
@@ -97,7 +101,7 @@ class consumption():
                 elif one_track.loc[i, 'surface'] == "paving_stones":
                     one_track.loc[i, 'rolling_resistance'] = 0.033 # source: The Automotive Chassis book
                 else:
-                    one_track.loc[i, 'rolling_resistance'] = 0.02 
+                    one_track.loc[i, 'rolling_resistance'] = 0.02
             #loop through the dataframe and calculate the gradient
             for i in one_track.index:
                 if (i == len(one_track)-1):
@@ -138,11 +142,11 @@ class consumption():
                 else:
                     time_in_second = ((x_list[i] - x_list[i-1]).total_seconds())
                     one_track.loc[i,'accumulate_time_interval'] = time_in_second + one_track.loc[i-1,'accumulate_time_interval']
-                    
+
                 time_interval.append(time_in_second)
             # add the time interval list to the track
             one_track['time_interval']=time_interval
-        
+
             # Convert the speed unit to m/s
             for i in one_track.index:
                 one_track.loc[i, 'speed'] = one_track.loc[i, 'GPS Speed.value'] / 3.6
@@ -177,10 +181,9 @@ class consumption():
                 car_cons = fuel_consumptions(one_track.engine_power[i],car, one_track.loc[i,'efficiency'])
                 one_track.loc[i, 'Consumption_Gasoline'] = car_cons   ## liters / hour
                 one_track.loc[i, 'CO2_Gasoline'] = car_cons * car.H_g      ## kg Co2 / hour
-            
+
             tracks = pd.concat([tracks, one_track])
             tracks = tracks[['elevation','accumulate_time_interval','maxspeed','Acceleration','surface','rolling_resistance','gradient','efficiency','Consumption_Gasoline','CO2_Gasoline']]
 
-            
-        return tracks
 
+        return tracks

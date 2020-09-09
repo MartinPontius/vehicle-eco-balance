@@ -11,20 +11,21 @@ requirements = [r.requirement for r in requirements]
 def parse_long_description():
     return io.open('README.md', encoding="utf-8").read()
 
+
 setup(
-    name="envirocar-py",
+    name="vehicle-eco-balance",
     packages=find_packages(exclude=["tests", "tests.*"]),
     package_data={
         "": ["*.txt"]
     },
     include_package_data=True,
-    version="0.0.3",
-    description="Python Utilities for enviroCar",
+    version="0.0.1",
+    description="Python Utilities for estimating the eco balance of moving vehicles",
     long_description=parse_long_description(),
     long_description_content_type="text/markdown",
     license="MIT",
     url="https://github.com/enviroCar/envirocar-py",
-    keywords=["enviroCar", "trajectory", "xFCD"],
+    keywords=["enviroCar", "trajectory", "xFCD", "energy consumption", "emissions"],
     install_requires=requirements,
     test_suite="tests",
     classifiers=[

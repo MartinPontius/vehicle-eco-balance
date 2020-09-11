@@ -1,6 +1,6 @@
 fuel_types = {
     'electric': {
-        'calorific_value': 8.8
+        'calorific_value': None
     },
     'gasoline': {
         'calorific_value': 8.8
@@ -17,13 +17,13 @@ class Vehicle:
 
 
 class Car(Vehicle):
-    def __init__(self, mass=1500, car_cross_sectional=2, air_drag_coefficient=0.3, fuel_type='electric', idle_power=2):
+    def __init__(self, mass=1500, car_cross_sectional=2.6, air_drag_coefficient=0.3, fuel_type='gasoline', idle_power=2):
         super().__init__(mass)
         self.fuel_type = fuel_type
-        self.A = car_cross_sectional  # in m²
+        self.A = car_cross_sectional    # in m²
         self.cw = air_drag_coefficient  # dimensionless
         self.calorific_value = fuel_types.get(self.fuel_type).get('calorific_value')  # in kWh/l
-        self.idle_power = idle_power  # in kW
+        self.idle_power = idle_power    # in kW
 
 
 class Airplane(Vehicle):

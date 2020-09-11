@@ -1,34 +1,32 @@
-# EnergyDemand
+# vehicle-eco-balance
 
-The tool is an extension of enviroCar Python package and allows users to download the trajectory data and estimate the energy demand and co2 emission along tracks. The tool provides users to set their cars parameters, and also elaborate on the accuracy of elevation, driving efficiency, and the pavement of the track. 
+This library offers functionality to analyse the eco balance of moving vehicles. So far vehicles are restricted to cars (trucks or busses should also work but are not evaluated yet).
+It allows users to estimate the fuel or energy demand and co2 emissions along tracks.
 
-The extension currently only supports users to estimate the energy demand and co2 emission value of downlod track data. It is intended to further expand these functionalities with additional analytics in the future.
+To analyse the eco balance of cars, we recommend to use the package envirocar-py (https://github.com/enviroCar/envirocar-py) to download xFCD from the open Citizen Science Platform enviroCar (https://envirocar.org/).
 
 ## Installation
 
 The package requires a Python version >= 3.6. The package is available on the PyPI package manager and can be installed with the following command:
 
 ```
-pip install envirocar-py --upgrade
+pip install vehicle-eco-balance --upgrade
 ```
 
-To install envirocar-py in develop mode, use the following:
+To install vehicle-eco-balance in develop mode, use the following:
 
 ```
 python setup.py develop
 ```
 
-If the extension hasn't included in the envirocar-py, you can install it manully by the steps:
-Download the <b> folder</b> by the [link](https://github.com/masawdah/enrgydemand/tree/master/envirocar/client/fuel)
-and the files <b> required_functions.py , request_param.py </b>
-from the [folder](https://github.com/masawdah/enrgydemand/tree/master/envirocar/client)
-Finally, put the files under your local envirocar/client folder
-
 
 ## Examples
-The example of the extension can be found [here](https://github.com/masawdah/enrgydemand/blob/master/examples/python_tool_example.ipynb)
+Example of the package can be found [here](https://github.com/MartinPontius/vehicle-eco-balance/tree/master/examples).
 
-The step by step calculation can be found in the example [folder](https://github.com/masawdah/enrgydemand/blob/master/examples/Energy_demand.ipynb)
+
+## Documentation
+
+To check the usage of the provided functions and classes use `help(<class/function>)`, e.g. `help(Consumption)`.
 
 
 ## License ##

@@ -24,8 +24,8 @@ setup(
     long_description=parse_long_description(),
     long_description_content_type="text/markdown",
     license="MIT",
-    url="https://github.com/enviroCar/envirocar-py",
-    keywords=["enviroCar", "trajectory", "xFCD", "energy consumption", "emissions"],
+    url="https://github.com/MartinPontius/vehicle-eco-balance",
+    keywords=["trajectory", "energy consumption", "fuel consumption", "CO2 emissions", "xFCD", "enviroCar"],
     install_requires=requirements,
     test_suite="tests",
     classifiers=[

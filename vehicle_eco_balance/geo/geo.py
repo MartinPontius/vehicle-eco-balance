@@ -1,5 +1,9 @@
 import numpy as np
+import requests as req
+from requests.exceptions import HTTPError
+import time
 from geopy import distance
+import osmnx as ox
 
 
 def calc_gradient_angle(point1, point2):
@@ -7,14 +11,15 @@ def calc_gradient_angle(point1, point2):
 
     Parameters
     ----------
-    :param point1: first coordinate
-    :type point1: tuple (latitude, longitude, altitude)
-    :param point2: second coordinate
-    :type point2: tuple (latitude, longitude, altitude)
+    point1: tuple (latitude, longitude, altitude)
+        first coordinate
+    point2: tuple (latitude, longitude, altitude)
+        second coordinate
 
     Returns
     -------
-    :return gradient angle in radians
+    gradient_angle: float
+        gradient angle in radians between -pi/2 and pi/2
     """
 
     coord1, alt1 = point1[:-1], point1[-1]
@@ -36,18 +41,19 @@ def calc_distance(coord1, coord2, distance_type="geodetic", ellipsoid="WGS-84"):
 
     Parameters
     ----------
-    :param coord1: first coordinate
-    :type coord1: tuple (latitude, longitude)
-    :param coord2: second coordinate
-    :type coord2: tuple (latitude, longitude)
-    :param distance_type: geodetic or great-circle (default geodetic)
-    :type distance_type: str
-    :param ellipsoid: ellipsoid for geodetic distance (default WGS-84)
-    :type ellipsoid: str
+    coord1: tuple (latitude, longitude)
+        first coordinate
+    coord2: tuple (latitude, longitude)
+        second coordinate
+    distance_type: str
+        'geodetic' or 'great-circle' (default 'geodetic')
+    ellipsoid: str
+        ellipsoid for geodetic distance (default 'WGS-84')
 
     Returns
     -------
-    :return distance in meters
+    distance: float
+        distance in meters
     """
 
     if distance_type == "geodetic":
@@ -58,76 +64,172 @@ def calc_distance(coord1, coord2, distance_type="geodetic", ellipsoid="WGS-84"):
         print("distance_type " + distance_type + " is unknown!")
 
 
-def get_elevation():
-    # loop through the dataframe and get the elevation from open source for each record in each routes
-    for i in range(0, n):
-        one_track_id = track_df['track.id'].unique()[i]
-        one_track = track_df[track_df['track.id'] == one_track_id]
-        # estimate the len of data
-        batch = [int(len(one_track) / 100), len(one_track) % 100]
-        elevation = []
-        # get elevation
-        for i in range(batch[0] + 1):
-            # create requeest 100 parameter
-            s = i * 100
-            e = (i + 1) * 100
-            if i < batch[0] + 1:
-                --e
-            else:
-                e = e + batch[1]
-            # check the parameters (s) not excced the lenght of the track
-            if s >= len(one_track):
-                break
-            # creat the request
-            parms = generate_parms(one_track, s, e)
-            # send the request and get the results
-            access = url + parms
-            part = request(access)
-            if part == None:
-                part = [np.nan] * (e + 1 - s)
-            # put the results in a list
-            elevation.extend(part)
-            time.sleep(1)
-        one_track['elevation'] = elevation
-        # Filterout the null value and use GPS altitude to fill them
-        temp = one_track[one_track['elevation'].isnull() == True]
-        if len(temp) > 0:
-            for i in temp.index:
-                one_track.loc[i, 'elevation'] = one_track.loc[i, 'GPS Altitude.value']
+class ElevationAPI:
+    """
+    ElevationAPI
+
+    Example APIs:
+    - Open Topo Data (https://www.opentopodata.org/)
+       - API: https://api.opentopodata.org/v1/
+       - Open
+       - Example: https://api.opentopodata.org/v1/eudem25m?locations=39.7391536,-104.9847034
+       - Limits
+          - Max 100 locations per request.
+          - Max 1 call per second.
+          - Max 1000 calls per day.
+    - Google Elevation API (https://developers.google.com/maps/documentation/elevation/overview)
+       - API: https://maps.googleapis.com/maps/api/elevation/
+       - Commercial, API key needed
+       - Example: https://maps.googleapis.com/maps/api/elevation/json?locations=39.7391536,-104.9847034&key=YOUR_API_KEY
+
+    Parameters
+    ----------
+    base_url: str
+        API base url (default 'https://api.opentopodata.org/v1/')
+    dataset: str
+        eudem25m, aster30m, srtm30m, ... (default 'eudem25m', check https://www.opentopodata.org/ for details)
+    api_key: str (default None)
+        API key for the service
+
+    Attributes
+    ----------
+    base_url: str
+        API base url
+    location_limit: int
+        number of allowed locations per request
+    params: dictionary
+        parameters for the get request (e.g. locations, key)
+    """
+
+    def __init__(self, base_url='https://api.opentopodata.org/v1/', dataset='eudem25m', api_key=None):
+
+        self.base_url = base_url
+        if self.base_url != 'https://api.opentopodata.org/v1/':
+            self.location_limit = None
+        else:
+            self.location_limit = 100
+            self.base_url = self.base_url + dataset
+        self.params = {'key': api_key}
+
+    def get_elevation(self, coordinates):
+        """ Get elevation for the given coordinates from an elevation API
+
+        Parameters
+        ----------
+        coordinates: list of tuples (latitude, longitude)
+            coordinates in EPSG:4326 (WGS-84)
+
+        Returns
+        -------
+        elevation: numpy array
+            elevation for each coordinate
+        """
+
+        elevation = np.zeros(len(coordinates))
+
+        if self.location_limit is None:
+            print('Download elevation for all {} coordinates'.format(len(coordinates)))
+            elevation[0, len(coordinates)] = self._make_request(coordinates)
+            return elevation
+
+        # Split request into multiple requests if location limit is provided
+        for i in range(int(len(coordinates) / self.location_limit) + 1):
+            start = i * self.location_limit
+            end = (i + 1) * self.location_limit
+            print('Download elevation for coordinates {start} to {end}'.format(start=start + 1, end=end))
+            elevation[start:end] = self._make_request(coordinates[start:end])
+            time.sleep(1)  # for OpenTopoData the limit is max 1 call per second
+
+        return elevation
+
+    def _make_request(self, coordinates):
+        locations_str = self._coordinates2param(coordinates)
+        self.params.update({'locations': locations_str})
+        elevation_list = []
+
+        try:
+            response = req.get(self.base_url, params=self.params)
+            response.raise_for_status()
+        except HTTPError as http_err:
+            print('An http error occurred during the request: {}'.format(http_err))
+        except Exception as err:
+            print('An error occurred during the request: {}'.format(err))
+        else:
+            results = response.json()['results']
+            elevation_list = [result['elevation'] for result in results]
+
+        return elevation_list
+
+    def _coordinates2param(self, coordinates):
+        """ Transform coordinates to string in order to set the locations request parameter """
+        return ''.join([str(coordinate[0]) + ',' + str(coordinate[1]) + '|' for coordinate in coordinates])
 
 
-def get_cr():
-    # Match the graph with osm and get maxspeed & surface attriubutes
-    ox.settings.useful_tags_way = ["maxspeed", "surface"]
-    for i in one_track.index:
-        lat = one_track.loc[i, 'geometry'].y
-        lng = one_track.loc[i, 'geometry'].x
-        x = (ox.get_nearest_edge(G, (lat, lng)))
+def get_cr_from_osm(coordinates):
+    """ Get rolling coefficient (cr) from osm surface attribute
+
+    1) Determine nearest osm edge for each coordinate
+    2) Determine surface attribute for each osm edge
+    3) Get rolling coefficient (cr) for the corresponding surface type from literature
+
+    Hint: function will take some time when coordinates have a large spatial extent.
+
+    Parameters
+    ----------
+    coordinates: list of tuples (latitude, longitude)
+        coordinates
+
+    Returns
+    -------
+    [cr, surface]: list of numpy arrays
+        first array are rolling coefficient (cr) values and second array are surface attributes
+    """
+
+    # TODO: Improve performance
+    # TODO: Check scientific literature for rolling coefficient values
+
+    lats = [coordinate[0] for coordinate in coordinates]
+    lngs = [coordinate[1] for coordinate in coordinates]
+
+    min_y = np.min(lats)
+    max_y = np.max(lats)
+    min_x = np.min(lngs)
+    max_x = np.max(lngs)
+
+    ox.settings.useful_tags_way = ["surface"]
+
+    print('Get graph from bounding box: min_y={}, max_y={}, min_x={}, max_x={}'.format(min_y, max_y, min_x, max_x))
+    graph = ox.graph_from_bbox(max_y, min_y, max_x, min_x, network_type='drive')
+
+    surface = []
+    cr = []
+    i = 0
+
+    print('Find nearest osm edge and set rolling coefficient according to the surface type of the edge.')
+    for lat, lng in coordinates:
+
+        x = ox.get_nearest_edge(graph, (lat, lng))
         p = [x[0], x[1]]
-        a = ox.utils_graph.get_route_edge_attributes(G, p)
+        a = ox.utils_graph.get_route_edge_attributes(graph, p)
         dic = a[0]
-        # check if the edge has maximum speed value if not then use the value of previous point
-        if "maxspeed" in dic:
-            one_track.loc[i, "maxspeed"] = dic["maxspeed"]
-        else:
-            if i > 0:
-                m = one_track.loc[i - 1, "maxspeed"]
-                one_track.loc[i, "maxspeed"] = m
 
-        # check if the edge has a surface value, if not then use the value of previous point
         if "surface" in dic:
-            one_track.loc[i, "surface"] = dic["surface"]
+            surface.append(dic["surface"])
         else:
-            if i > 0:
-                s = one_track.loc[i - 1, "surface"]
-                one_track.loc[i, "surface"] = s
+            surface.append(None)
 
-        # get the rolling resistance cofficient
-        if one_track.loc[i, 'surface'] == "asphalt":
-            one_track.loc[i, 'rolling_resistance'] = 0.02  # source: engineeringtoolbox.com
-        elif one_track.loc[i, 'surface'] == "cobblestone":
-            one_track.loc[i, 'rolling_resistance'] = 0.015  # source: engineeringtoolbox.com
-        elif one_track.loc[i, 'surface'] == "paving_stones":
-            one_track.loc[i, 'rolling_resistance'] = 0.033  # source: The Automotive Chassis book
+        # Get the rolling resistance coefficient
+        # Sources
+        # https://www.engineeringtoolbox.com/rolling-friction-resistance-d_1303.html
+        # The Automotive Chassis book
+        if surface[i] == "asphalt":
+            cr.append(0.02)
+        elif surface[i] == "cobblestone":
+            cr.append(0.015)
+        elif surface[i] == "paving_stones":
+            cr.append(0.033)
         else:
-            one_track.loc[i, 'rolling_resistance'] = 0.02
+            cr.append(0.02)
+        i = i + 1
+
+    return [np.array(cr), np.array(surface)]

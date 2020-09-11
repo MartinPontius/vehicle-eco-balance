@@ -3,20 +3,23 @@ import numpy as np
 
 def calc_acceleration(speed, dt):
     """ Calculate acceleration from speed and time
+
     Parameters
     ----------
     speed: numpy array
        speed in km/h
     dt: numpy array
-       sampling time in seconds
+       interval times between measurements in seconds
+
     Returns
     -------
-    acceleration as numpy array
+    acceleration: numpy array
+        acceleration in m/s²
     """
 
     # Check if arrays are of same length
     if len(speed) != len(dt):
-        print("Error")
+        raise Exception("The arrays speed and dt must have the same length!")
 
     # Convert speed from km/h to m/s
     speed = speed / 3.6

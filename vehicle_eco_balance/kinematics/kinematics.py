@@ -27,7 +27,7 @@ def calc_acceleration(speed, dt):
     # Calculate acceleration
     acceleration = np.zeros(len(speed))
     for i in range(1, len(speed)):
-        if dt[i] is not 0.0:
+        if dt[i] != 0.0:
             acceleration[i] = ((speed[i] - speed[i-1]) / dt[i])
 
     return acceleration

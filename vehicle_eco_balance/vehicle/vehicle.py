@@ -1,12 +1,18 @@
 fuel_types = {
     'electric': {
-        'calorific_value': None
+        'calorific_value': None,
+        'min_efficiency': 0.9,
+        'max_efficiency': 0.9
     },
     'gasoline': {
-        'calorific_value': 8.8
+        'calorific_value': 8.8,
+        'min_efficiency': 0.1,
+        'max_efficiency': 0.4
     },
     'diesel': {
-        'calorific_value': 9.9
+        'calorific_value': 9.9,
+        'min_efficiency': 0.1,
+        'max_efficiency': 0.43
     }
 }
 
@@ -24,7 +30,8 @@ class Car(Vehicle):
         self.cw = air_drag_coefficient  # dimensionless
         self.calorific_value = fuel_types.get(self.fuel_type).get('calorific_value')  # in kWh/l
         self.idle_power = idle_power    # in kW
-
+        self.min_efficiency = fuel_types.get(self.fuel_type).get('min_efficiency')
+        self.max_efficiency = fuel_types.get(self.fuel_type).get('max_efficiency')
 
 class Airplane(Vehicle):
     pass

@@ -21,21 +21,21 @@ def get_interval_time(time1, time2):
                datetime.strptime(time2, '%Y-%m-%dT%H:%M:%S')).total_seconds()
 
 
-def calc_efficiency(res, res_max, res_min, eff_max, eff_min):
+def calc_efficiency(res, res_min, res_max, eff_min, eff_max):
     """ Estimate efficiency by linear interpolation
 
     Parameters
     ----------
     res: numpy array
         driving resistance
-    res_max: float
-        maximum driving resistance for interpolation
     res_min: float
         minimum driving resistance for interpolation
-    eff_max: float
-        maximum efficiency for interpolation
+    res_max: float
+        maximum driving resistance for interpolation
     eff_min: float
         minimum efficiency for interpolation
+    eff_max: float
+        maximum efficiency for interpolation
 
     Returns
     -------

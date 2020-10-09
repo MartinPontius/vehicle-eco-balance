@@ -17,8 +17,6 @@ class ConsumptionPhys:
         'energy' or 'fuel'
     consumption : numpy array
         consumption in l/h if consumption_type is 'fuel' and in kW if consumption_type is 'energy'
-    consumption_acc: float
-        accumulated consumption in l if consumption_type is 'fuel' and in kWh if consumption_type is 'energy'
     power: numpy array
         power in kW
     driving_resistance: numpy array
@@ -34,7 +32,6 @@ class ConsumptionPhys:
     def __init__(self, consumption_type):
         self.consumption_type = consumption_type
         self.consumption = None
-        self.consumption_acc = None
         self.power = None
         self.driving_resistance = None
         self.efficiency = None
@@ -132,27 +129,6 @@ class ConsumptionPhys:
         """ Calculate inertial resistance in N """
         return mass * acceleration
 
-    def accumulate(self, dt):
-        """ Sum instantaneous consumption values
-
-        Parameters
-        ----------
-        dt : numpy array
-            interval times between measurements
-
-        Returns
-        -------
-        self.consumption_acc:
-            accumulated consumption (in l if consumption_type is 'fuel', in kWh if consumption_type is 'energy')
-        """
-
-        self.consumption_acc = np.sum(self.consumption * dt / 3600)
-        # equation is applicable for both consumption types:
-        # units: kW * s = kW * 1/3600 h = kWh / 3600
-        # units: l/h * s = l/(3600 s) * s = l / 3600
-
-        return self.consumption_acc
-
 
 class ConsumptionStat:
     """ Statistical consumption model.
@@ -176,8 +152,8 @@ class ConsumptionStat:
     ----------
     consumption : numpy array
         consumption in l/h
-    consumption_acc: float
-        accumulate consumption in l
+    idle_consumption: float
+        idle consumption in l (default 1.5)
     a : float
         first coefficent (default 1.57)
     b : float
@@ -191,9 +167,9 @@ class ConsumptionStat:
 
     """
 
-    def __init__(self, a=1.57, b=0.000134, c=0.0700, d=2.12, e=0.244):
+    def __init__(self, a=1.57, b=0.000134, c=0.0700, d=2.12, e=0.244, idle_consumption=1.5):
         self.consumption = None
-        self.consumption_acc = None
+        self.idle_consumption = idle_consumption
         self.a = a
         self.b = b
         self.c = c
@@ -221,23 +197,27 @@ class ConsumptionStat:
         self.consumption = self.a + self.b * np.power(speed / 3.6, 3) + self.c * speed / 3.6 * np.cos(gradient_angle) + \
                            self.d * speed / 3.6 * np.sin(gradient_angle) + self.e * speed / 3.6 * acceleration
 
+        self.consumption = np.maximum(self.consumption, self.idle_consumption)
+
         return self.consumption
 
-    def accumulate(self, dt):
-        """ Sum instantaneous consumption values
 
-        Parameters
-        ----------
-        dt : numpy array
-            interval times between measurements
+def accumulate_consumption(consumption, dt):
+    """ Sum instantaneous consumption values over a whole track
 
-        Returns
-        -------
-        self.consumption_acc:
-            accumulated consumption in l
-        """
+    Parameters
+    ----------
+    consumption : numpy array
+        instantaneous consumption in l/h or kW
+    dt : numpy array
+        interval times between measurements
 
-        self.consumption_acc = np.sum(self.consumption * dt / 3600)
-        # units: l/h * s = l/(3600 s) * s = l / 3600
+    Returns
+    -------
+    accumulated consumption in l or kWh depending on input
+    """
 
-        return self.consumption_acc
+    # equation is applicable for both consumption types:
+    # units: kW * s = kW * 1/3600 h = kWh / 3600
+    # units: l/h * s = l/(3600 s) * s = l / 3600
+    return np.sum(consumption * dt / 3600)

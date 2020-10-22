@@ -60,7 +60,7 @@ class Sensitivity:
         numpy array
             consumption difference caused by vehicle mass variation in l/h
         """
-        return 1 / (self.calorific_value * self.efficiency) * (self.g * (self.cr * np.cos(gradient_angle) + np.sin(gradient_angle)) + acceleration) * speed/3.6 * dm
+        return 1 / (1000 * self.calorific_value * self.efficiency) * (self.g * (self.cr * np.cos(gradient_angle) + np.sin(gradient_angle)) + acceleration) * speed/3.6 * dm
 
     def dQ_width(self, speed, dw):
         """ Calculate first order variation of consumption for a specified vehicle width variation
@@ -77,7 +77,7 @@ class Sensitivity:
         numpy array
             consumption difference caused by vehicle width variation in l/h
         """
-        return 1 / (self.calorific_value * self.efficiency) * 0.5 * self.height * self.cw * self.rho_air * np.power(speed/3.6, 3) * dw
+        return 1 / (1000 * self.calorific_value * self.efficiency) * 0.5 * self.height * self.cw * self.rho_air * np.power(speed/3.6, 3) * dw
 
     def dQ_height(self, speed, dh):
         """ Calculate first order variation of consumption for a specified vehicle height variation
@@ -95,7 +95,7 @@ class Sensitivity:
         numpy array
             consumption difference caused by vehicle height variation in l/h
         """
-        return 1 / (self.calorific_value * self.efficiency) * 0.5 * self.width * self.cw * self.rho_air * np.power(speed/3.6, 3) * dh
+        return 1 / (1000 * self.calorific_value * self.efficiency) * 0.5 * self.width * self.cw * self.rho_air * np.power(speed/3.6, 3) * dh
 
     def dQ_cw(self, speed, dcw):
         """ Calculate first order variation of consumption for a specified air drag coefficient variation
@@ -112,7 +112,7 @@ class Sensitivity:
         numpy array
             consumption difference caused by air drag coefficient variation in l/h
         """
-        return 1 / (self.calorific_value * self.efficiency) * 0.5 * self.width * self.height * self.rho_air * np.power(speed/3.6, 3) * dcw
+        return 1 / (1000 * self.calorific_value * self.efficiency) * 0.5 * self.width * self.height * self.rho_air * np.power(speed/3.6, 3) * dcw
 
     def dQ_cr(self, speed, gradient_angle, dcr):
         """ Calculate first order variation of consumption for a specified rolling coefficient variation
@@ -131,7 +131,7 @@ class Sensitivity:
         numpy array
             consumption difference caused by rolling coefficient variation in l/h
         """
-        return 1 / (self.calorific_value * self.efficiency) * self.mass * self.g * np.cos(gradient_angle) * speed/3.6 * dcr
+        return 1 / (1000 * self.calorific_value * self.efficiency) * self.mass * self.g * np.cos(gradient_angle) * speed/3.6 * dcr
 
     def dQ_g(self, speed, gradient_angle, dg):
         """ Calculate first order variation of consumption for a specified gravitational acceleration variation
@@ -150,7 +150,7 @@ class Sensitivity:
         numpy array
             consumption difference caused by gravitational acceleration variation in l/h
         """
-        return 1 / (self.calorific_value * self.efficiency) * self.mass * (self.cr * np.cos(gradient_angle) + np.sin(gradient_angle)) * speed/3.6 * dg
+        return 1 / (1000 * self.calorific_value * self.efficiency) * self.mass * (self.cr * np.cos(gradient_angle) + np.sin(gradient_angle)) * speed/3.6 * dg
 
     def dQ_rho_air(self, speed, drho):
         """ Calculate first order variation of consumption for a specified air mass density variation
@@ -167,7 +167,7 @@ class Sensitivity:
         numpy array
             consumption difference caused by air mass density variation in l/h
         """
-        return 1 / (self.calorific_value * self.efficiency) * 0.5 * self.height * self.width * self.cw * np.power(speed/3.6, 3) * drho
+        return 1 / (1000 * self.calorific_value * self.efficiency) * 0.5 * self.height * self.width * self.cw * np.power(speed/3.6, 3) * drho
 
     def dQ_calorific_value(self, speed, acceleration, gradient_angle, dcal):
         """ Calculate first order variation of consumption for a specified calorific value variation
@@ -188,7 +188,7 @@ class Sensitivity:
         numpy array
             consumption difference caused by calorific value variation in l/h
         """
-        return - 1 / (np.power(self.calorific_value,2) * self.efficiency) * ( 0.5 * self.height * self.width * self.cw * self.rho_air * np.power(speed/3.6, 3) +
+        return - 1 / (np.power(1000 * self.calorific_value, 2) * self.efficiency) * ( 0.5 * self.height * self.width * self.cw * self.rho_air * np.power(speed/3.6, 3) +
                 self.mass * self.g * (self.cr * np.cos(gradient_angle) + np.sin(gradient_angle)) * speed/3.6 + self.mass * acceleration * speed/3.6 ) * dcal
 
     def dQ_efficiency(self, speed, acceleration, gradient_angle, deff):
@@ -210,7 +210,7 @@ class Sensitivity:
         numpy array
             consumption difference caused by efficiency variation in l/h
         """
-        return - 1 / (self.calorific_value * np.power(self.efficiency,2)) * ( 0.5 * self.height * self.width * self.cw * self.rho_air * np.power(speed/3.6, 3) +
+        return - 1 / (1000 * self.calorific_value * np.power(self.efficiency,2)) * ( 0.5 * self.height * self.width * self.cw * self.rho_air * np.power(speed/3.6, 3) +
                 self.mass * self.g * (self.cr * np.cos(gradient_angle) + np.sin(gradient_angle)) * speed/3.6 + self.mass * acceleration * speed/3.6) * deff
 
     def dQ_speed(self, speed, acceleration, gradient_angle, dspeed):
@@ -232,7 +232,7 @@ class Sensitivity:
         numpy array
             consumption difference caused by speed variation in l/h
         """
-        return 1 / (self.calorific_value * self.efficiency) * ( 1.5 * self.height * self.width * self.cw * self.rho_air * np.power(speed/3.6, 2) +
+        return 1 / (1000 * self.calorific_value * self.efficiency) * ( 1.5 * self.height * self.width * self.cw * self.rho_air * np.power(speed/3.6, 2) +
                 self.mass * self.g * (self.cr * np.cos(gradient_angle) + np.sin(gradient_angle)) + self.mass * acceleration) * dspeed
 
     def dQ_acceleration(self, speed, dacc):
@@ -250,7 +250,7 @@ class Sensitivity:
         numpy array
             consumption difference caused by acceleration variation in l/h
         """
-        return 1 / (self.calorific_value * self.efficiency) * self.m * speed * dacc
+        return 1 / (1000 * self.calorific_value * self.efficiency) * self.m * speed * dacc
 
     def dQ_grad_angle(self, speed, gradient_angle, dgrad):
         """ Calculate first order variation of consumption for a specified gradient angle variation
@@ -269,6 +269,6 @@ class Sensitivity:
         numpy array
             consumption difference caused by gradient angle variation in l/h
         """
-        return 1 / (self.calorific_value * self.efficiency) * self.mass * self.g * (np.cos(gradient_angle) - self.cr * np.sin(gradient_angle)) * speed/3.6 * dgrad
+        return 1 / (1000 * self.calorific_value * self.efficiency) * self.mass * self.g * (np.cos(gradient_angle) - self.cr * np.sin(gradient_angle)) * speed/3.6 * dgrad
 
 

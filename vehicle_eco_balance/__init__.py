@@ -3,7 +3,7 @@ from .geo import calc_distance, calc_gradient_angle, get_cr_from_osm, ElevationA
 from .utils import get_interval_time, calc_efficiency, error_mean, error_measure, error_100km
 from .kinematics import calc_acceleration
 from .vehicle import Car
-
+from .sensitivity import Sensitivity
 
 
 

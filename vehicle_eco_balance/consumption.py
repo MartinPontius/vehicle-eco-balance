@@ -1,5 +1,5 @@
 import numpy as np
-from ..utils import calc_efficiency
+from vehicle_eco_balance.utils import calc_efficiency
 
 
 class ConsumptionPhys:

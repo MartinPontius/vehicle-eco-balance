@@ -45,3 +45,66 @@ def calc_efficiency(res, res_min, res_max, eff_min, eff_max):
 
     return np.interp(res, [res_min, res_max], [eff_min, eff_max])
 
+
+def error_mean(consumption1, consumption2, dt):
+    """ Calculate time-weighted mean error between tow consumption series
+
+    Parameters
+    ----------
+    consumption1: numpy array
+        consumption in l/h or kW
+    consumption2: numpy array
+        consumption in l/h or kW
+    dt: numpy array
+        time interval in seconds
+
+    Returns
+    -------
+    mean error: float
+        mean error in l/h or kW
+    """
+    return np.abs(np.sum(consumption1 * dt) / np.sum(dt) - np.sum(consumption2 * dt) / np.sum(dt))
+
+
+def error_measure(consumption1, consumption2, dt):
+    """ Calculate time-weighted measurement error between tow consumption series
+
+    Parameters
+    ----------
+    consumption1: numpy array
+        consumption in l/h or kW
+    consumption2: numpy array
+        consumption in l/h or kW
+    dt: numpy array
+        time interval in seconds
+
+    Returns
+    -------
+    measurement error: float
+        measurement error in l/h or kW
+    """
+
+    return np.sum(np.abs(consumption1 - consumption2) * dt) / np.sum(dt)
+
+
+def error_100km(consumption1, consumption2, dt, speed):
+    """ Calculate time-weighted mean error between tow consumption series
+
+    Parameters
+    ----------
+    consumption1: numpy array
+        consumption in l/h or kW
+    consumption2: numpy array
+        consumption in l/h or kW
+    dt: numpy array
+        time interval in seconds
+    speed: numpy array
+        speed in km/h
+
+    Returns
+    -------
+    consumption error: float
+         consumption error in litres per 100 km
+    """
+
+    return 100 * np.abs(np.sum(consumption1 * dt) - np.sum(consumption2 * dt)) / np.sum(speed * dt)

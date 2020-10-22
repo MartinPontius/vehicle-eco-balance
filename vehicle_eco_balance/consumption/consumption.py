@@ -38,7 +38,7 @@ class ConsumptionPhys:
         self.g = 9.81
         self.rho_air = 1.2
 
-    def calculate_consumption(self, speed, acceleration, gradient_angle, vehicle, cr, **kwargs):
+    def calculate_consumption(self, speed, acceleration, gradient_angle, vehicle, cr=0.02, **kwargs):
         """ Calculate energy/fuel consumption
 
         Parameters
@@ -221,3 +221,23 @@ def accumulate_consumption(consumption, dt):
     # units: kW * s = kW * 1/3600 h = kWh / 3600
     # units: l/h * s = l/(3600 s) * s = l / 3600
     return np.sum(consumption * dt / 3600)
+
+
+def consumption_per100km(consumption, dt, distance):
+    """ Sum instantaneous consumption values over a whole track
+
+    Parameters
+    ----------
+    consumption : numpy array
+        instantaneous consumption in l/h or kW
+    dt : numpy array
+        interval times between measurements
+    distance: float
+        total trajectory distance in km
+
+    Returns
+    -------
+    accumulated consumption in l or kWh depending on input
+    """
+
+    return 100 * accumulate_consumption(consumption, dt) / distance

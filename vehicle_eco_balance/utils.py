@@ -104,7 +104,7 @@ def error_100km(consumption1, consumption2, dt, speed):
     Returns
     -------
     consumption error: float
-         consumption error in litres per 100 km
+         consumption error in litres or kWh per 100 km
     """
 
     return 100 * np.abs(np.sum(consumption1 * dt) - np.sum(consumption2 * dt)) / np.sum(speed * dt)

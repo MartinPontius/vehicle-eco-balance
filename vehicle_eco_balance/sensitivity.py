@@ -11,9 +11,9 @@ class Sensitivity:
     g: float
         gravitational acceleration in m/s² (default 9.81)
     rho_air: float
-        air mass density in kg/m³ (default 1.2)
+        air mass density in kg/m³ (default 1.225)
     calorific_value: float
-        calorific value in kWh/l (default 8.8)
+        calorific value in kWh/l (default 9.12)
     cr: float
         rolling coefficient (default 0.02)
     cw: float
@@ -30,7 +30,7 @@ class Sensitivity:
     identical to parameters
     """
 
-    def __init__(self, rho_air=1.2, g=9.81, calorific_value=8.8, cr=0.02, cw=0.3, mass=1500, height=1.55, width=1.7, efficiency=0.25):
+    def __init__(self, rho_air=1.225, g=9.81, calorific_value=9.12, cr=0.02, cw=0.3, mass=1500, height=1.55, width=1.7, efficiency=0.25):
         self.rho_air = rho_air
         self.g = g
         self.calorific_value = calorific_value
@@ -250,7 +250,7 @@ class Sensitivity:
         numpy array
             consumption difference caused by acceleration variation in l/h
         """
-        return 1 / (1000 * self.calorific_value * self.efficiency) * self.m * speed * dacc
+        return 1 / (1000 * self.calorific_value * self.efficiency) * self.mass * speed * dacc
 
     def dQ_grad_angle(self, speed, gradient_angle, dgrad):
         """ Calculate first order variation of consumption for a specified gradient angle variation

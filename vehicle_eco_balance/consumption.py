@@ -10,6 +10,11 @@ class ConsumptionPhys:
     ----------
     consumption_type: str
         'energy' or 'fuel'
+    g¹: float
+        gravitational acceleration in m/s² (default 9.81)
+    rho_air²: float
+        air mass density in kg/m³ (default 1.225)
+
 
     Attributes
     ----------
@@ -23,36 +28,41 @@ class ConsumptionPhys:
         driving resistance in N
     efficiency: numpy array
         efficiency (dimensionless)
-    g: float
-        gravitational acceleration in m/s²
-    rho_air: float
-        air mass density in kg/m³
+    g¹: float
+        gravitational acceleration in m/s² (default 9.81)
+    rho_air²: float
+        air mass density in kg/m³ (default 1.225)
+
+    References for default values:
+    ¹ Martin Treiber and Arne Kesting. “Traffic flow dynamics.” In: Traffic Flow Dynamics: Data, Models and Simulation,
+      Springer-Verlag Berlin Heidelberg (2013). Page 395.
+    ² Stefan Pischinger und Ulrich Seiffert. Vieweg Handbuch Kraftfahrzeugtechnik. Springer, 2016. Page 63.
     """
 
-    def __init__(self, consumption_type):
+    def __init__(self, consumption_type, g=9.81, rho_air=1.225):
         self.consumption_type = consumption_type
         self.consumption = None
         self.power = None
         self.driving_resistance = None
         self.efficiency = None
-        self.g = 9.81
-        self.rho_air = 1.2
+        self.g = g
+        self.rho_air = rho_air
 
     def calculate_consumption(self, speed, acceleration, gradient_angle, vehicle, cr=0.02, **kwargs):
         """ Calculate energy/fuel consumption
 
         Parameters
         ----------
-        vehicle : class Vehicle
-            vehicle containing parameters like mass, air drag coefficient, etc.
-        cr: float or numpy array
-            rolling resistance coefficient
-        gradient_angle: numpy array
-            gradient angle (of the road) in radians
         speed: numpy array
             vehicle speed in km/h
         acceleration: numpy array
             vehicle acceleration in m/s²
+        gradient_angle: numpy array
+            gradient angle (of the road) in radians
+        vehicle : class Vehicle
+            vehicle containing parameters like mass, air drag coefficient, etc.
+        cr¹: float or numpy array
+            rolling resistance coefficient (default 0.02)
         kwargs: dictionary
             efficiency: float or numpy array
 
@@ -60,6 +70,10 @@ class ConsumptionPhys:
         -------
         self.consumption: numpy array
             instantaneous consumption for each sampling point (in l/h if consumption_type is 'fuel', in kW if consumption_type is 'energy')
+
+        References for default values:
+        ¹ Martin Treiber and Arne Kesting. “Traffic flow dynamics.” In: Traffic Flow Dynamics: Data, Models and Simulation,
+          Springer-Verlag Berlin Heidelberg (2013). Page 395.
         """
 
         # TODO: check input type and convert lists to numpy arrays?
@@ -73,14 +87,14 @@ class ConsumptionPhys:
         # Extract parameters from vehicle
         mass = vehicle.mass
         cw = vehicle.cw
-        A = vehicle.A
+        cross_section = vehicle.cross_section
         idle_power = vehicle.idle_power
         calorific_value = vehicle.calorific_value
         fuel_type = vehicle.fuel_type
         min_efficiency = vehicle.min_efficiency
         max_efficiency = vehicle.max_efficiency
 
-        self.driving_resistance = self._driving_resistance(speed / 3.6, acceleration, gradient_angle, mass, A, cw, cr)
+        self.driving_resistance = self._driving_resistance(speed / 3.6, acceleration, gradient_angle, mass, cross_section, cw, cr)
 
         efficiency = kwargs.get('efficiency', None)
         if efficiency is None:
@@ -105,17 +119,17 @@ class ConsumptionPhys:
         else:
             return np.maximum(power, idle_power)
 
-    def _driving_resistance(self, speed, acceleration, gradient_angle, mass, A, cw, cr):
+    def _driving_resistance(self, speed, acceleration, gradient_angle, mass, cross_section, cw, cr):
         """ Calculate driving resistance in N """
 
-        return self._aerodynamic_drag(speed, A, cw) \
+        return self._aerodynamic_drag(speed, cross_section, cw) \
                + self._rolling_resistance(gradient_angle, mass, cr) \
                + self._climbing_resistance(gradient_angle, mass) \
                + self._inertial_resistance(acceleration, mass)
 
-    def _aerodynamic_drag(self, speed, A, cw):
+    def _aerodynamic_drag(self, speed, cross_section, cw):
         """ Calculate aerodynamic drag in N """
-        return 0.5 * cw * A * self.rho_air * np.square(speed)
+        return 0.5 * cw * cross_section * self.rho_air * np.square(speed)
 
     def _rolling_resistance(self, gradient_angle, mass, cr):
         """ Calculate rolling resistance in N """
@@ -138,15 +152,15 @@ class ConsumptionStat:
     Parameters
     ----------
     a : float
-        first coefficent (default 1.57)
+        first coefficent (default 1.41)
     b : float
         second coefficent (default 0.000134)
     c : float
-        third coefficent (default 0.0700)
+        third coefficent (default 0.0670)
     d : float
-        fourth coefficent (default 2.12)
+        fourth coefficent (default 1.90)
     e : float
-        fifth coefficent (default 0.244)
+        fifth coefficent (default 0.197)
 
     Attributes
     ----------
@@ -155,19 +169,19 @@ class ConsumptionStat:
     idle_consumption: float
         idle consumption in l (default 1.5)
     a : float
-        first coefficent (default 1.57)
+        first coefficent (default 1.41)
     b : float
         second coefficent (default 0.000134)
     c : float
-        third coefficent (default 0.0700)
+        third coefficent (default 0.0670)
     d : float
-        fourth coefficent (default 2.12)
+        fourth coefficent (default 1.90)
     e : float
-        fifth coefficent (default 0.244)
+        fifth coefficent (default 0.197)
 
     """
 
-    def __init__(self, a=1.57, b=0.000134, c=0.0700, d=2.12, e=0.244, idle_consumption=1.5):
+    def __init__(self, a=1.41, b=0.000134, c=0.0670, d=1.90, e=0.197, idle_consumption=1.5):
         self.consumption = None
         self.idle_consumption = idle_consumption
         self.a = a

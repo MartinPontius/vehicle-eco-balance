@@ -44,6 +44,10 @@ class ConsumptionPhys:
         self.consumption = None
         self.power = None
         self.driving_resistance = None
+        self.aerodynamic_drag = None
+        self.rolling_resistance = None
+        self.climbing_resistance = None
+        self.inertial_resistance = None
         self.efficiency = None
         self.g = g
         self.rho_air = rho_air
@@ -94,14 +98,17 @@ class ConsumptionPhys:
         min_efficiency = vehicle.min_efficiency
         max_efficiency = vehicle.max_efficiency
 
-        self.driving_resistance = self._driving_resistance(speed / 3.6, acceleration, gradient_angle, mass, cross_section, cw, cr)
+        # Transform speed from km/h to m/s
+        speed = speed / 3.6
+
+        self.calc_driving_resistance(speed, acceleration, gradient_angle, mass, cross_section, cw, cr)
 
         efficiency = kwargs.get('efficiency', None)
         if efficiency is None:
             efficiency = calc_efficiency(self.driving_resistance, -2000, 2000, min_efficiency, max_efficiency)
         self.efficiency = efficiency
 
-        self.power = self._calc_engine_power(speed / 3.6, self.driving_resistance, idle_power, fuel_type)
+        self.calc_engine_power(speed, self.driving_resistance, idle_power, fuel_type)
         if self.consumption_type == 'energy':
             self.consumption = self.power / efficiency
         else:
@@ -109,39 +116,44 @@ class ConsumptionPhys:
 
         return self.consumption
 
-    def _calc_engine_power(self, speed, driving_resistance, idle_power, fuel_type):
+    def calc_engine_power(self, speed, driving_resistance, idle_power, fuel_type):
         """ Calculate engine power in kW """
 
-        power = speed * driving_resistance / 1000
+        self.power = speed * driving_resistance / 1000
         # Allow negative consumption for electric cars
-        if fuel_type == 'electric':
-            return power
-        else:
-            return np.maximum(power, idle_power)
+        if fuel_type != 'electric':
+            self.power = np.maximum(self.power, idle_power)
 
-    def _driving_resistance(self, speed, acceleration, gradient_angle, mass, cross_section, cw, cr):
+        return self.power
+
+    def calc_driving_resistance(self, speed, acceleration, gradient_angle, mass, cross_section, cw, cr):
         """ Calculate driving resistance in N """
 
-        return self._aerodynamic_drag(speed, cross_section, cw) \
-               + self._rolling_resistance(gradient_angle, mass, cr) \
-               + self._climbing_resistance(gradient_angle, mass) \
-               + self._inertial_resistance(acceleration, mass)
+        self.driving_resistance = self.calc_aerodynamic_drag(speed, cross_section, cw) \
+               + self.calc_rolling_resistance(gradient_angle, mass, cr) \
+               + self.calc_climbing_resistance(gradient_angle, mass) \
+               + self.calc_inertial_resistance(acceleration, mass)
+        return self.driving_resistance
 
-    def _aerodynamic_drag(self, speed, cross_section, cw):
+    def calc_aerodynamic_drag(self, speed, cross_section, cw):
         """ Calculate aerodynamic drag in N """
-        return 0.5 * cw * cross_section * self.rho_air * np.square(speed)
+        self.aerodynamic_drag = 0.5 * cw * cross_section * self.rho_air * np.square(speed)
+        return self.aerodynamic_drag
 
-    def _rolling_resistance(self, gradient_angle, mass, cr):
+    def calc_rolling_resistance(self, gradient_angle, mass, cr):
         """ Calculate rolling resistance in N """
-        return mass * self.g * cr * np.cos(gradient_angle)
+        self.rolling_resistance = mass * self.g * cr * np.cos(gradient_angle)
+        return self.rolling_resistance
 
-    def _climbing_resistance(self, gradient_angle, mass):
+    def calc_climbing_resistance(self, gradient_angle, mass):
         """ Calculate climbing resistance in N """
-        return mass * self.g * np.sin(gradient_angle)
+        self.climbing_resistance = mass * self.g * np.sin(gradient_angle)
+        return self.climbing_resistance
 
-    def _inertial_resistance(self, acceleration, mass):
+    def calc_inertial_resistance(self, acceleration, mass):
         """ Calculate inertial resistance in N """
-        return mass * acceleration
+        self.inertial_resistance = mass * acceleration
+        return self.inertial_resistance
 
 
 class ConsumptionStat:
@@ -208,8 +220,11 @@ class ConsumptionStat:
             instantaneous consumption for each sampling point in l/h
         """
 
-        self.consumption = self.a + self.b * np.power(speed / 3.6, 3) + self.c * speed / 3.6 * np.cos(gradient_angle) + \
-                           self.d * speed / 3.6 * np.sin(gradient_angle) + self.e * speed / 3.6 * acceleration
+        # Transform speed from km/h to m/s
+        speed = speed/3.6
+
+        self.consumption = self.a + self.b * np.power(speed, 3) + self.c * speed * np.cos(gradient_angle) + \
+                           self.d * speed * np.sin(gradient_angle) + self.e * speed * acceleration
 
         self.consumption = np.maximum(self.consumption, self.idle_consumption)
 

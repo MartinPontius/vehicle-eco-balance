@@ -52,7 +52,7 @@ class Sensitivity:
             acceleration in m/s²
         gradient_angle: numpy array
             gradient angle in rad
-        dm: float
+        dm: float or numpy array
             vehicle mass variation in kg
 
         Returns
@@ -69,7 +69,7 @@ class Sensitivity:
         ----------
         speed: numpy array
             speed in km/h
-        dw: float
+        dw: float or numpy array
             vehicle width variation in m
 
         Returns
@@ -87,7 +87,7 @@ class Sensitivity:
         speed: numpy array
             speed in km/h
             gradient angle in rad
-        dh: float
+        dh: float or numpy array
             vehicle height variation in m
 
         Returns
@@ -104,7 +104,7 @@ class Sensitivity:
         ----------
         speed: numpy array
             speed in km/h
-        dcw: float
+        dcw: float or numpy array
             air drag coefficient variation (dimensionless)
 
         Returns
@@ -123,7 +123,7 @@ class Sensitivity:
             speed in km/h
         gradient_angle: numpy array
             gradient angle in rad
-        dcr: float
+        dcr: float or numpy array
             rolling coefficient variation (dimensionless)
 
         Returns
@@ -142,7 +142,7 @@ class Sensitivity:
             speed in km/h
         gradient_angle: numpy array
             gradient angle in rad
-        dg: float
+        dg: float or numpy array
             gravitational acceleration variation in kg
 
         Returns
@@ -159,7 +159,7 @@ class Sensitivity:
         ----------
         speed: numpy array
             speed in km/h
-        drho: float
+        drho: float or numpy array
             air mass density variation in kg/m³
 
         Returns
@@ -180,7 +180,7 @@ class Sensitivity:
             acceleration in m/s²
         gradient_angle: numpy array
             gradient angle in rad
-        dcal: float
+        dcal: float or numpy array
             calorific value variation in kWh/l
 
         Returns
@@ -189,7 +189,7 @@ class Sensitivity:
             consumption difference caused by calorific value variation in l/h
         """
         return - 1 / (np.power(1000 * self.calorific_value, 2) * self.efficiency) * ( 0.5 * self.height * self.width * self.cw * self.rho_air * np.power(speed/3.6, 3) +
-                self.mass * self.g * (self.cr * np.cos(gradient_angle) + np.sin(gradient_angle)) * speed/3.6 + self.mass * acceleration * speed/3.6 ) * dcal
+                self.mass * self.g * (self.cr * np.cos(gradient_angle) + np.sin(gradient_angle)) * speed/3.6 + self.mass * acceleration * speed/3.6 ) * 1000 * dcal
 
     def dQ_efficiency(self, speed, acceleration, gradient_angle, deff):
         """ Calculate first order variation of consumption for a specified efficiency variation
@@ -202,7 +202,7 @@ class Sensitivity:
             acceleration in m/s²
         gradient_angle: numpy array
             gradient angle in rad
-        deff: float
+        deff: float or numpy array
             efficiency variation (ratio, NOT percent)
 
         Returns
@@ -210,7 +210,7 @@ class Sensitivity:
         numpy array
             consumption difference caused by efficiency variation in l/h
         """
-        return - 1 / (1000 * self.calorific_value * np.power(self.efficiency,2)) * ( 0.5 * self.height * self.width * self.cw * self.rho_air * np.power(speed/3.6, 3) +
+        return - 1 / (1000 * self.calorific_value * np.power(self.efficiency, 2)) * ( 0.5 * self.height * self.width * self.cw * self.rho_air * np.power(speed/3.6, 3) +
                 self.mass * self.g * (self.cr * np.cos(gradient_angle) + np.sin(gradient_angle)) * speed/3.6 + self.mass * acceleration * speed/3.6) * deff
 
     def dQ_speed(self, speed, acceleration, gradient_angle, dspeed):
@@ -224,7 +224,7 @@ class Sensitivity:
             acceleration in m/s²
         gradient_angle: numpy array
             gradient angle in rad
-        dspeed: float
+        dspeed: float or numpy array
             speed variation in km/h
 
         Returns
@@ -242,7 +242,7 @@ class Sensitivity:
         ----------
         speed: numpy array
             speed in km/h
-        dacc: float
+        dacc: float or numpy array
             acceleration variation in m/s²
 
         Returns
@@ -261,7 +261,7 @@ class Sensitivity:
             speed in km/h
         gradient_angle: numpy array
             gradient angle in rad
-        dgrad: float
+        dgrad: float or numpy array
             gradient angle variation in rad
 
         Returns

@@ -7,11 +7,7 @@ To analyse the eco balance of cars, we recommend to use the package envirocar-py
 
 ## Installation
 
-The package requires a Python version >= 3.6. The package is available on the PyPI package manager and can be installed with the following command:
-
-```
-pip install vehicle-eco-balance --upgrade
-```
+The package requires a Python version >= 3.6.
 
 To install vehicle-eco-balance in develop mode, use the following:
 
